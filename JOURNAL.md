@@ -82,7 +82,7 @@ for Week 8.
 
 ## Week 8 — Reproduction & solution planning
 
-**Reproduction commit link:** _(to be filled in after commit)_
+**Reproduction commit link:** https://github.com/carloace16/pathreview/commit/cbc7894f73da9427c1b83da18a645d330799a23d
 
 **Reproduction summary:**
 Started the app locally (`docker compose up -d` → `make run`) and hit
