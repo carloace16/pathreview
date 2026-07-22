@@ -77,3 +77,49 @@ only when it truly isn't.
 
 **Verdict:** All boxes checked — claim submitted, branch created, ready
 for Week 8.
+
+---
+
+## Week 8 — Reproduction & solution planning
+
+**Reproduction commit link:** _(to be filled in after commit)_
+
+**Reproduction summary:**
+Started the app locally (`docker compose up -d` → `make run`) and hit
+`curl http://localhost:8000/health`. The endpoint returned 503 with
+`"postgres": "unhealthy"`, and the backend log recorded the exact
+SQLAlchemy 2.x error the issue predicts:
+`postgres_health_check_failed error="Textual SQL expression 'SELECT 1' should be explicitly declared as text('SELECT 1')"`.
+Docker confirmed the `db` container was `(healthy)` at the same time,
+so the failure is entirely in query construction, not the database.
+
+**PLAN.md link:** https://github.com/carloace16/pathreview/blob/fix/154-health-check-sql-text/PLAN.md
+
+**Walkthrough video (recommended):** _(not recorded — will be shared in Slack if time permits during Week 9)_
+
+**Blockers or open questions:**
+None going into Week 9. The `settings.redis_host` error visible in the
+same log is a separate, known bug (issue #155) that's out of scope for
+this PR. Also worth flagging for my own reference: I had to renamed the
+project folder from `Week 7` to `Week 7-10` between weeks, which broke
+the venv (hardcoded paths). Fixed by deleting `.venv/` and re-running
+`make setup`. Documenting here so I don't lose an hour to it again.
+
+### Reproduction steps (for the record)
+
+```bash
+# 1. Start services
+docker compose up -d
+
+# 2. Start app
+make run   # in a separate terminal, keep running
+
+# 3. Hit the endpoint
+curl http://localhost:8000/health
+# → 503, dependencies.postgres == "unhealthy"
+
+# 4. Check backend log for the caught exception
+# → postgres_health_check_failed
+#      error="Textual SQL expression 'SELECT 1' should be
+#             explicitly declared as text('SELECT 1')"
+```
