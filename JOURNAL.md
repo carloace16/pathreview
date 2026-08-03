@@ -159,7 +159,7 @@ my change.
 
 ### Check-in 2 (end of week)
 
-**PR link:** _(to be filled in after opening the PR)_
+**PR link:** https://github.com/ascherj/pathreview/pull/709
 
 **Branch:** `fix/154-health-check-sql-text`
 
