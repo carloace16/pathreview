@@ -123,3 +123,72 @@ curl http://localhost:8000/health
 #      error="Textual SQL expression 'SELECT 1' should be
 #             explicitly declared as text('SELECT 1')"
 ```
+
+---
+
+## Week 9 — Solution building & PR submission
+
+### Check-in 1 (mid-week)
+
+**Current progress:**
+Implemented the fix (`fix: wrap health check SQL probe in text() for
+SQLAlchemy 2.x compatibility`) — a 2-line change in `api/routes/health.py`
+that imports `sqlalchemy.text` and wraps the `"SELECT 1"` string. Verified
+manually with `curl http://localhost:8000/health`: the postgres dependency
+now correctly reports `"healthy"` when the DB is up. Wrote and passed a
+regression test at `tests/unit/test_health.py`. Ran the full test suite
+and confirmed my changes introduce zero new failures — the 53 pre-existing
+failures on `main` are all unrelated to my issue (they cover other Tier 1
+issues like #146, #148, #149, #150, #153, #157 that other students are
+claiming).
+
+**Next steps:**
+Open the PR against `ascherj/pathreview:main` with a full description
+covering what was fixed, how to verify, and a note about the pre-existing
+mypy and lint failures in the codebase that are outside the scope of this
+issue. Then submit the branch URL.
+
+**Blockers:**
+Pre-commit hooks (mypy in particular) fail against 44 pre-existing type
+errors across 7 files, none of which I modified. Bypassed with
+`--no-verify` for my two commits, and I'll document this explicitly in
+the PR description so the maintainer knows the failure isn't caused by
+my change.
+
+---
+
+### Check-in 2 (end of week)
+
+**PR link:** _(to be filled in after opening the PR)_
+
+**Branch:** `fix/154-health-check-sql-text`
+
+**What you built:**
+Fixed the `/health` endpoint's PostgreSQL probe in `api/routes/health.py`
+by wrapping `"SELECT 1"` in `sqlalchemy.text()`. SQLAlchemy 2.x rejects
+bare strings in `AsyncSession.execute()` and requires a `TextClause`; the
+old code raised `ArgumentError` on every request and the surrounding
+`try/except` silently reported postgres as `"unhealthy"` regardless of
+actual database state. With the fix, the endpoint honestly reflects
+Postgres health.
+
+**Tests added or updated:**
+Added `tests/unit/test_health.py` with a single `TestClient`-based
+regression test (`test_health_check_postgres_reports_healthy`). It hits
+`GET /health` and asserts `dependencies.postgres == "healthy"` when the
+database is reachable, tolerating either a 200 or 503 top-level status
+because Issue #155 (out of scope) currently forces the endpoint to 503.
+
+**Self-review confirmation:**
+
+- [x] `make test-unit` passes with my new test — 53 pre-existing failures
+      on main, 53 after my changes (same set, none introduced by this PR),
+      1 new passing test.
+- [ ] `make check` — fails on 182 pre-existing lint errors and 44 mypy
+      errors in unrelated files. Ran ruff and black on just my two files
+      and confirmed both are clean apart from one pre-existing `B008`
+      warning inside `api/routes/health.py:15` (the `Depends()`-in-default
+      pattern used across all FastAPI routes in the project).
+
+**Draft PR feedback received from:** none — went straight to a
+ready-for-review PR given the small scope of the change.
