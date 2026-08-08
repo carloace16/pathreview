@@ -192,3 +192,108 @@ because Issue #155 (out of scope) currently forces the endpoint to 503.
 
 **Draft PR feedback received from:** none — went straight to a
 ready-for-review PR given the small scope of the change.
+
+---
+
+## Week 10 — Iteration & reflection
+
+### Reviewer feedback
+
+**Feedback received:** [ ] Yes [x] No — still awaiting review
+
+**Summary of feedback:**
+No reviewer or maintainer comments came in on PR #709 during the week.
+Per the Summer 2026 course notes, reviewer feedback isn't a feature this
+cohort, so this is expected.
+
+**How you responded:**
+N/A — no feedback to respond to. The PR is still open at
+https://github.com/ascherj/pathreview/pull/709.
+
+---
+
+### Reflection
+
+**What was harder than you expected?**
+
+Two things, both about _scope_. First, deciding what NOT to fix. The
+`/health` endpoint I was working in has _two_ bugs — the SQLAlchemy 2.x
+issue that #154 is about, and a separate one where `settings.redis_host`
+doesn't exist on the Settings class (issue #155). Both were visible to
+me every time I hit the endpoint with curl. It was genuinely tempting
+to fix both since I was already there. Learning to stay in my lane and
+explicitly document the other bug as out of scope — in my plan, in my
+commits, and in the PR description — was a different discipline than
+anything I'd practiced before.
+
+Second, dealing with pre-existing failures. Running `make check` and
+`make test-unit` on a fresh clone of main showed 182 lint errors and
+53 failing tests before I touched a single line. My instinct was to
+try to help clean some of that up. But my job was #154, not the
+codebase's overall hygiene. The move was to capture baselines, prove
+my change didn't add anything new, and clearly say so in the PR — not
+to fix everything I could see.
+
+**What did you learn about working in a large codebase?**
+
+The biggest thing: you spend most of your time reading, not writing.
+The actual fix for #154 was two lines of code. But before I could write
+those two lines with confidence, I had to read `api/routes/health.py`
+top to bottom, read `core/database.py` to understand what `get_db`
+returns, read PathReview's `conftest.py` to see if there was a shared
+async client fixture I could reuse (there wasn't), and read one of the
+existing test files to understand the project's test patterns. The
+2-line diff sits on top of hours of reading.
+
+Also — you don't own the codebase, so your PR has to explain itself.
+On my own projects, if a commit is unclear, I know what I meant. On
+PathReview, a stranger reads my PR and needs to know what I changed,
+why, what I intentionally didn't touch, and what problems in the diff
+aren't my fault. That's a real writing skill, not just a coding skill.
+
+**How did AI tools help — and where did they fall short?**
+
+Where AI helped most: orientation. Uploading files and asking Claude to
+summarize the naming conventions, test patterns, and dependency-injection
+flow saved me from a ton of "wait, how does this project even work"
+confusion in the first day. Also useful as a devil's advocate for my
+PR description — I asked what a careful maintainer might push back on,
+and it flagged a scope-creep concern with a `timedelta` import that ruff
+had auto-fixed, which I ended up reverting.
+
+Where AI fell short: environment-specific gotchas. The ChromaDB numpy
+compatibility bug that broke my setup in Week 7 wasn't something Claude
+predicted — I had to see the crash, read the log, and figure it out.
+Same with the venv paths breaking when I renamed my Week 7 folder to
+"Week 7-10." Both of those were "the terminal is telling you something
+weird, go read it" moments. AI was helpful _after_ I brought the error
+to it, but it couldn't warn me about them upfront.
+
+**What would you do differently if you started over?**
+
+Start earlier. Both weeks I hit a real setup bug — Docker/numpy in Week
+7, the venv path issue in Week 8 — that ate an hour I didn't budget for.
+Neither was in SETUP.md. If I did this again, I'd give myself an extra
+hour up front the first time I sit down each week, specifically for
+"things that will go wrong that nobody warned me about."
+
+I also would have opened the PR earlier in Week 9. The spec kept saying
+"open a draft PR early for peer feedback" and I ended up going straight
+from finishing my code to opening a ready-for-review PR at midnight the
+night of the deadline. Even if I didn't end up getting peer feedback,
+an earlier draft would have forced me to write my PR description before
+I was tired, and it would have given a maintainer a chance to comment
+if they wanted to.
+
+**What are you most proud of from this module?**
+
+My PR description. I spent probably 30 minutes on it — naming the exact
+SQLAlchemy error message word-for-word, showing before-and-after curl
+output, listing the pre-existing lint and test failures with specific
+counts, and explicitly documenting the `--no-verify` bypass I used
+because pre-commit mypy fails on 44 pre-existing type errors in files
+I didn't touch. If a maintainer opens PR #709, they should be able to
+tell in about 60 seconds what I changed, why, what evidence I have that
+it works, and what problems in the codebase are _not_ mine to answer
+for. That felt like the actual professional skill this module was
+teaching — not the code, the communication _around_ the code.
